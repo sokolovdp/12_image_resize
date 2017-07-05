@@ -37,13 +37,12 @@ def check_image_file(image_file: "str") -> "str":
         return image_file
 
 
-def main(file, out_path, width, height, wxh, scale):
-    with Image.open(file) as old_image:
+def main(filename, out_path, width, height, wxh, scale):
+    with Image.open(filename) as old_image:
         old_width, old_height = old_image.size
-
     aspect_ratio = round(old_width / old_height, 2)
     # set output directory path
-    new_path, _ = os.path.split(file)
+    new_path, _ = os.path.split(filename)
     if not new_path:
         new_path = os.getcwd()
     if out_path:
@@ -64,8 +63,7 @@ def main(file, out_path, width, height, wxh, scale):
         new_width = int(new_height * aspect_ratio)
     else:  # new ratio wxh
         new_width, new_height = wxh
-
-    print("re-sized imaged saved to {}".format(resize_image(file, (new_width, new_height), new_path)))
+    print("re-sized imaged saved to {}".format(resize_image(filename, (new_width, new_height), new_path)))
 
 
 if __name__ == '__main__':
@@ -80,4 +78,3 @@ if __name__ == '__main__':
     args = ap.parse_args(sys.argv[1:])
 
     main(args.image_file, args.out_path, args.width, args.height, args.wxh, args.scale)
-
