@@ -4,17 +4,6 @@ import os
 from PIL import Image
 
 
-def resize_image(old_image_path: "str", new_size: "tuple", new_dir: "str") -> "str":
-    with Image.open(old_image_path) as image:
-        new_image = image.resize(new_size, Image.ANTIALIAS)
-        new_file_ext = image.format.lower()
-    _, file_name = os.path.split(old_image_path)
-    new_file_name = "{}_{}x{}.{}".format(file_name.split('.')[0], new_size[0], new_size[1], new_file_ext)
-    new_file_path = os.path.join(new_dir, new_file_name)
-    new_image.save(new_file_path)
-    return new_file_path
-
-
 def check_wxh_format(wxh: "str") -> "tuple":
     pars = wxh.lower().split('x')
     try:
@@ -39,14 +28,10 @@ def check_image_file(image_file: "str") -> "str":
         return image_file
 
 
-def main(filename, new_path, width, height, wxh, scale):
-    with Image.open(filename) as old_image:
-        old_width, old_height = old_image.size
+def resize_image(old_image: "class 'PIL.JpegImagePlugin.JpegImageFile'", width: "int", height: "int", wxh: "int",
+                 scale: "float") -> "tuple":
+    old_width, old_height = old_image.size
     aspect_ratio = round(old_width / old_height, 2)
-    if not new_path:
-        new_path, _ = os.path.split(filename)
-        if not new_path:
-            new_path = os.getcwd()
     if scale:  # one of these arguments must be set
         new_width = int(old_width * scale)
         new_height = int(old_height * scale)
@@ -58,7 +43,23 @@ def main(filename, new_path, width, height, wxh, scale):
         new_width = int(new_height * aspect_ratio)
     else:
         new_width, new_height = wxh
-    print("re-sized imaged saved to {}".format(resize_image(filename, (new_width, new_height), new_path)))
+    new_size = (new_width, new_height)
+    return old_image.resize(new_size, Image.ANTIALIAS), new_size
+
+
+def main(image_file_name: "str", new_path: "str", width: "int", height: "int", wxh: "int", scale: "float"):
+    with Image.open(image_file_name) as old_image:
+        new_image, new_size = resize_image(old_image, width, height, wxh, scale)
+        new_file_ext = old_image.format.lower()
+    if not new_path:  # use path given in the image file name
+        new_path, _ = os.path.split(image_file_name)
+        if not new_path:
+            new_path = os.getcwd()
+    _, image_file_name = os.path.split(image_file_name)
+    new_image_file_name = "{}_{}x{}.{}".format(image_file_name.split('.')[0], new_size[0], new_size[1], new_file_ext)
+    new_image_file_full_path = os.path.join(new_path, new_image_file_name)
+    new_image.save(new_image_file_full_path)
+    print("re-sized imaged saved to {}".format(new_image_file_full_path))
 
 
 if __name__ == '__main__':
