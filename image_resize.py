@@ -20,6 +20,8 @@ def check_wxh_format(wxh: "str") -> "tuple":
     try:
         width = int(pars[0])
         height = int(pars[1])
+        if width <= 0 or height <= 0:
+            raise argparse.ArgumentTypeError("invalid value {}, should be like this: 200x300".format(wxh))
     except (ValueError, IndexError):
         raise argparse.ArgumentTypeError("invalid value {}, should be like this: 200x300".format(wxh))
     else:
@@ -37,22 +39,15 @@ def check_image_file(image_file: "str") -> "str":
         return image_file
 
 
-def main(filename, out_path, width, height, wxh, scale):
+def main(filename, new_path, width, height, wxh, scale):
     with Image.open(filename) as old_image:
         old_width, old_height = old_image.size
     aspect_ratio = round(old_width / old_height, 2)
-    # set output directory path
-    new_path, _ = os.path.split(filename)
     if not new_path:
-        new_path = os.getcwd()
-    if out_path:
-        if not os.path.isdir(out_path):
-            print("{} is not a valid output path".format(out_path))
-            exit()
-        else:
-            new_path = out_path
-    # define new image size
-    if scale:
+        new_path, _ = os.path.split(filename)
+        if not new_path:
+            new_path = os.getcwd()
+    if scale:  # one of these arguments must be set
         new_width = int(old_width * scale)
         new_height = int(old_height * scale)
     elif width:
@@ -61,7 +56,7 @@ def main(filename, out_path, width, height, wxh, scale):
     elif height:
         new_height = height
         new_width = int(new_height * aspect_ratio)
-    else:  # new ratio wxh
+    else:
         new_width, new_height = wxh
     print("re-sized imaged saved to {}".format(resize_image(filename, (new_width, new_height), new_path)))
 
@@ -76,5 +71,7 @@ if __name__ == '__main__':
     mgroup.add_argument("--scale", dest="scale", action="store", type=float, help="scale of picture resizing")
     ap.add_argument("--output", dest="out_path", action="store", help="folder where to put resized picture")
     args = ap.parse_args(sys.argv[1:])
-
-    main(args.image_file, args.out_path, args.width, args.height, args.wxh, args.scale)
+    if args.out_path and not os.path.isdir(args.out_path):
+        print("{} is not a valid output path".format(args.out_path))
+    else:
+        main(args.image_file, args.out_path, args.width, args.height, args.wxh, args.scale)
