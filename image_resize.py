@@ -2,6 +2,9 @@ import argparse
 import sys
 import os
 from PIL import Image
+from collections import namedtuple
+
+picture_size = namedtuple('size', ['width', 'height'])
 
 
 def check_wxh_format(wxh: "str") -> "tuple":
@@ -14,7 +17,7 @@ def check_wxh_format(wxh: "str") -> "tuple":
     except (ValueError, IndexError):
         raise argparse.ArgumentTypeError("invalid value {}, should be like this: 200x300".format(wxh))
     else:
-        return width, height
+        return picture_size(width, height)
 
 
 def check_image_file(image_file: "str") -> "str":
@@ -43,7 +46,7 @@ def resize_image(old_image: "class 'PIL.JpegImagePlugin.JpegImageFile'", width: 
         new_width = int(new_height * aspect_ratio)
     else:
         new_width, new_height = wxh
-    new_size = (new_width, new_height)
+    new_size = picture_size(new_width, new_height)
     return old_image.resize(new_size, Image.ANTIALIAS), new_size
 
 
@@ -56,7 +59,8 @@ def main(image_file_name: "str", new_path: "str", width: "int", height: "int", w
         if not new_path:
             new_path = os.getcwd()
     _, image_file_name = os.path.split(image_file_name)
-    new_image_file_name = "{}_{}x{}.{}".format(image_file_name.split('.')[0], new_size[0], new_size[1], new_file_ext)
+    new_image_file_name = "{}_{}x{}.{}".format(image_file_name.split('.')[0], new_size.width, new_size.height,
+                                               new_file_ext)
     new_image_file_full_path = os.path.join(new_path, new_image_file_name)
     new_image.save(new_image_file_full_path)
     print("re-sized imaged saved to {}".format(new_image_file_full_path))
